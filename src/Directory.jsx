@@ -9,7 +9,7 @@ const Directory = () => {
   const [Rename, setRename] = useState("");
   const [oldName, setOldName] = useState("");
 
-  const baseURL = "http://192.168.1.10:5000";
+  const baseURL = "https://5c5d82895b33.ngrok-free.app";
   let browurl = window.location;
   const fetchURL = `${baseURL}/directory/${path}`;
 
@@ -45,7 +45,9 @@ const Directory = () => {
   async function deleteHandel(fileName, isDir) {
     console.log(path);
     let response = await fetch(
-      `${baseURL}/${isDir ? "folder" : "file"}${path==''?'':'/'+path}/${fileName}`,
+      `${baseURL}/${isDir ? "folder" : "file"}${
+        path == "" ? "" : "/" + path
+      }/${fileName}`,
       {
         method: "DELETE",
         headers: {
@@ -85,7 +87,6 @@ const Directory = () => {
     console.log(`${baseURL}/${path}`);
     let response = await fetch(`${baseURL}/mkdir/${path}`, { method: "POST" });
     let data = await response.text();
-    console.log("How Ar you guys");
     fetchData();
   }
 
@@ -101,7 +102,7 @@ const Directory = () => {
       >
         CreateDir
       </button>
-
+      <br />
       <input
         type="text"
         onChange={(e) => {
