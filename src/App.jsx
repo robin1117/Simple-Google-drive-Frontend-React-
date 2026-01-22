@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { data, Link, Route, Routes, useParams } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Directory from "./Directory";
 
 function App() {
   return (
     <Routes>
-      <Route path="/*" element={<Directory />} />
+      <Route path="/" element={<Directory />} />
+      <Route path="/directory/:dirId?" element={<Directory />} />
     </Routes>
   );
 }
