@@ -30,7 +30,12 @@ const Directory = () => {
     let file = e.target.files[0];
     const xhr = new XMLHttpRequest();
 
+    //creating form
+    let formData = new FormData();
+    formData.append("file", file);
+
     xhr.open("POST", `${baseURL}/file/${file.name}`, true);
+    xhr.responseType = "json";
 
     if (dirId) {
       xhr.setRequestHeader("dirid", dirId);
@@ -38,6 +43,7 @@ const Directory = () => {
 
     xhr.onload = function () {
       fetchData();
+      console.log("Response:", xhr.response); // ✅ JSON object
     };
 
     xhr.upload.addEventListener("progress", (e) => {
@@ -45,7 +51,8 @@ const Directory = () => {
       setprogress(`${progress.toFixed(2)}%`);
     });
 
-    xhr.send(file);
+    // sending formData
+    xhr.send(formData);
   }
 
   async function deleteHandel(id, fileordir) {
@@ -138,7 +145,7 @@ const Directory = () => {
             </button>
             <button
               onClick={() => {
-                deleteHandel(id,'directory');
+                deleteHandel(id, "directory");
               }}
             >
               Delete
@@ -156,7 +163,7 @@ const Directory = () => {
               :<a href={`${baseURL}/file/${id}?action=download`}>download</a>
               <button
                 onClick={() => {
-                  deleteHandel(id,'file');
+                  deleteHandel(id, "file");
                 }}
               >
                 Delete
