@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const Directory = () => {
+  let navigate = useNavigate();
+  const [rootDirId, setRootDirId] = useState(window.localStorage.rootDirId);
   let dirID = useParams();
-  let dirId = dirID.dirId ?? "";
+  let dirId = dirID.dirId ?? rootDirId;
+  console.log(dirId);
+
   const [progress, setprogress] = useState();
   const [directoriesList, setDirectoriesList] = useState([]);
   const [fileList, setFileList] = useState([]);
@@ -22,7 +26,12 @@ const Directory = () => {
     setDirectoriesList(data.directories);
     setFileList(data.files);
   }
+
   useEffect(() => {
+    if (!rootDirId || rootDirId == "undefined") {
+      navigate("/login");
+      return;
+    }
     fetchData();
   }, [fetchURL]);
 
@@ -101,6 +110,14 @@ const Directory = () => {
 
   return (
     <>
+      <button
+        onClick={() => {
+          window.localStorage.clear();
+          setRootDirId("");
+        }}
+      >
+        Logout
+      </button>
       <h1> for Virtual Express Api</h1>
       <input type="file" onChange={uplaodHandle} />
 
