@@ -6,7 +6,6 @@ const Directory = () => {
   const [rootDirId, setRootDirId] = useState(window.localStorage.rootDirId);
   let dirID = useParams();
   let dirId = dirID.dirId ?? rootDirId;
-  console.log(dirId);
 
   const [progress, setprogress] = useState();
   const [directoriesList, setDirectoriesList] = useState([]);
@@ -36,32 +35,49 @@ const Directory = () => {
   }, [fetchURL]);
 
   async function uplaodHandle(e) {
-    let file = e.target.files[0];
-    const xhr = new XMLHttpRequest();
+    const files = Array.from(e.target.files);
 
-    //creating form
-    let formData = new FormData();
-    formData.append("file", file);
+    for (let file of files) {
+      const xhr = new XMLHttpRequest();
 
-    xhr.open("POST", `${baseURL}/file/${file.name}`, true);
-    xhr.responseType = "json";
+      let formData = new FormData();
+      formData.append("file", file);
 
-    if (dirId) {
-      xhr.setRequestHeader("dirid", dirId);
+      xhr.open("POST", `${baseURL}/file/${file.name}`, true);
+      xhr.responseType = "json";
+
+      if (dirId) {
+        xhr.setRequestHeader("dirid", dirId);
+      }
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          let percent = (e.loaded / e.total) * 100;
+          setprogress(`${file.name} → ${percent.toFixed(2)}%`);
+        }
+      };
+
+      xhr.onload = () => {
+        console.log("Uploaded:", file.name, xhr.response);
+        fetchData(); // refresh after each upload
+        setTimeout(() => {
+          setprogress("");
+        }, 1000);
+      };
+
+      xhr.onerror = () => {
+        console.error("Upload failed:", file.name);
+      };
+
+      xhr.send(formData);
     }
 
-    xhr.onload = function () {
-      fetchData();
-      console.log("Response:", xhr.response); // ✅ JSON object
-    };
+    // setInterval(() => {
+    //   console.log(files);
+    // }, 1000);
 
-    xhr.upload.addEventListener("progress", (e) => {
-      let progress = (e.loaded / e.total) * 100;
-      setprogress(`${progress.toFixed(2)}%`);
-    });
-
-    // sending formData
-    xhr.send(formData);
+    // reset input so same file can be selected again
+    e.target.value = "";
   }
 
   async function deleteHandel(id, fileordir) {
@@ -119,7 +135,7 @@ const Directory = () => {
         Logout
       </button>
       <h1> for Virtual Express Api</h1>
-      <input type="file" onChange={uplaodHandle} />
+      <input multiple type="file" onChange={uplaodHandle} />
 
       <button
         onClick={() => {
