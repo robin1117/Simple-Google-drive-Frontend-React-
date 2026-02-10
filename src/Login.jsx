@@ -21,7 +21,7 @@ const Login = () => {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const response = await fetch("http://192.168.1.10:5000/user/login", {
+    const response = await fetch("http://localhost:5000/user/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -41,42 +41,63 @@ const Login = () => {
     }, 1000);
   }
 
-  return (
-    <div style={{ maxWidth: "400px", margin: "50px auto" }}>
-      <h2>Login</h2>
+  const message = error ? error : isLogined ? "Logged in successfully." : "";
+  const messageState = error ? "is-error" : isLogined ? "is-success" : "";
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <br />
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="login-badge">Simple Drive</div>
+          <h2>Welcome back</h2>
+          <p>Sign in to keep your folders synced and secure.</p>
+        </div>
+
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label className="login-label" htmlFor="email">
+            Email
+          </label>
           <input
+            id="email"
+            className="login-input"
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
+            placeholder="you@company.com"
             required
           />
-        </div>
 
-        <div>
-          <label>Password</label>
-          <br />
+          <label className="login-label" htmlFor="password">
+            Password
+          </label>
           <input
+            id="password"
+            className="login-input"
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
+            placeholder="••••••••"
             required
           />
+
+          <button className="login-button" type="submit">
+            Log in
+          </button>
+
+          {message ? (
+            <div className={`login-message ${messageState}`}>{message}</div>
+          ) : null}
+        </form>
+
+        <div className="login-footer">
+          New here?{" "}
+          <Link className="login-link" to={"/register"}>
+            Create an account
+          </Link>
         </div>
-
-        <br />
-        <button type="submit">Login</button>
-      </form>
-      <div>{error}</div>
-      <div>{isLogined ? "Logined Sucess" : ""}</div>
-
-      <Link to={"/register"}>Register</Link>
+      </div>
     </div>
   );
 };
