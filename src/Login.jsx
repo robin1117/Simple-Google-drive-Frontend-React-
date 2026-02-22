@@ -26,12 +26,11 @@ const Login = () => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(formData),
     });
 
     const data = await response.json();
-    let rootDirId = window.localStorage.setItem("rootDirId", data.rootDirId);
-
     if (data.error) {
       return errorSet(data.error);
     }

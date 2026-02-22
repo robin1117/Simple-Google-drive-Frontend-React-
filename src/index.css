@@ -220,6 +220,42 @@ body {
   align-items: center;
 }
 
+.dir-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.dir-user-icon {
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.dir-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.dir-user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dir-user-email {
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.68);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dir-upload {
   position: relative;
   overflow: hidden;
@@ -257,6 +293,13 @@ body {
 .dir-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+}
+
+.dir-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .dir-button.primary {
@@ -471,5 +514,14 @@ body {
   .dir-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .dir-user-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dir-user-email {
+    max-width: none;
   }
 }

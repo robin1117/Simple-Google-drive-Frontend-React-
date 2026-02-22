@@ -1,47 +1,126 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { BsFiletypeMp4 } from "react-icons/bs";
+import { BsFiletypePng } from "react-icons/bs";
+import { TbPng } from "react-icons/tb";
+import { SiJpeg } from "react-icons/si";
+import { BsFiletypeJpg } from "react-icons/bs";
+import {
+  FaUpload,
+  FaFolderPlus,
+  FaFolder,
+  FaEye,
+  FaDownload,
+  FaPen,
+  FaTrash,
+  FaTimes,
+  FaSave,
+  FaUserCircle,
+  FaFileAlt,
+} from "react-icons/fa";
+import { IoLogOut } from "react-icons/io5";
+
+let logoArr = [
+  { exe: ".mp4", logo: <BsFiletypeMp4 size={30} /> },
+  { exe: ".mkv", logo: <BsFiletypeMp4 size={30} /> },
+  { exe: ".rar", logo: <BsFiletypePng size={30} /> },
+  { exe: ".png", logo: <TbPng size={30} /> },
+  { exe: ".jpeg", logo: <SiJpeg size={30} /> },
+  { exe: ".jpg", logo: <BsFiletypeJpg size={30} /> },
+];
 
 const Directory = () => {
   let navigate = useNavigate();
-  const [rootDirId, setRootDirId] = useState(window.localStorage.rootDirId);
+
   let dirID = useParams();
-  let dirId = dirID.dirId ?? rootDirId;
+  let dirId = dirID.dirId;
 
   const [directoriesList, setDirectoriesList] = useState([]);
-  const [fileList, setFileList] = useState([]);
   const [currentDir, setCurrentDir] = useState("");
-
+  const [fileList, setFileList] = useState([]);
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState("");
   const [renameTarget, setRenameTarget] = useState("");
   const [isRenameOpen, setIsRenameOpen] = useState(false);
-
   const [uploadQueue, setUploadQueue] = useState([]);
+  const [profile, setProfile] = useState({ name: "", email: "" });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const baseURL = "http://localhost:5000";
   const fetchURL = `${baseURL}/directory/${dirId ?? ""}`;
 
   async function fetchData() {
-    const res = await fetch(fetchURL);
-    const data = await res.json();
-    setDirectoriesList(data.directories);
-    setFileList(data.files);
-    setCurrentDir(data.dirName);
+    try {
+      const res = await fetch(fetchURL, {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      console.log(data);
+      if (data.error) {
+        navigate("/login");
+        return;
+      }
+      setDirectoriesList(data.directories);
+      setFileList(data.files);
+      setCurrentDir(data.dirName);
+    } catch (error) {
+      console.error("Failed to fetch directory data:", error);
+    }
+  }
+
+  async function fetchProfile() {
+    try {
+      const res = await fetch(`${baseURL}/user`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        navigate("/login");
+        return;
+      }
+
+      setProfile({
+        name: data.name ?? "",
+        email: data.email ?? "",
+      });
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
   }
 
   useEffect(() => {
-    if (!rootDirId || rootDirId == "undefined") {
-      navigate("/login");
+    fetchData();
+    fetchProfile();
+  }, [fetchURL]);
+
+  async function handleLogout() {
+    if (isLoggingOut) {
       return;
     }
-    fetchData();
-  }, [fetchURL]);
+
+    setIsLoggingOut(true);
+    try {
+      await fetch(`${baseURL}/user/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    } finally {
+      navigate("/login");
+      setIsLoggingOut(false);
+    }
+  }
 
   async function uploadHandle(e) {
     const files = Array.from(e.target.files);
 
     for (let file of files) {
       const xhr = new XMLHttpRequest();
+      xhr.withCredentials = true;
       const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       console.log(uploadId);
       setUploadQueue((prev) => [
@@ -52,7 +131,7 @@ const Directory = () => {
       let formData = new FormData();
       formData.append("file", file);
 
-      xhr.open("POST", `${baseURL}/file/${file.name}`,true);
+      xhr.open("POST", `${baseURL}/file/${file.name}`, true);
 
       xhr.responseType = "json";
 
@@ -71,7 +150,6 @@ const Directory = () => {
                 : item,
             ),
           );
-
         }
       };
 
@@ -110,6 +188,7 @@ const Directory = () => {
   async function deleteHandel(id, fileordir) {
     let response = await fetch(`${baseURL}/${fileordir}/${id}`, {
       method: "DELETE",
+      credentials: "include",
     });
     let data = await response.text();
     console.log(data);
@@ -134,6 +213,7 @@ const Directory = () => {
         fileName: renameValue,
       },
       body: JSON.stringify({ fileName: `${renameValue}` }),
+      credentials: "include",
     });
     setRenameValue("");
     setRenameTarget("");
@@ -150,11 +230,19 @@ const Directory = () => {
       headers: {
         parentdirid: dirId,
       },
+      credentials: "include",
     });
     let data = await response.text();
     console.log(data);
     fetchData();
   }
+
+  function findLogo(exection) {
+    const normalized = typeof exection === "string" ? exection.toLowerCase() : "";
+    let logoObj = logoArr.find((logoObj) => logoObj.exe == normalized);
+    return logoObj?.logo ?? <FaFileAlt size={24} />;
+  }
+
   return (
     <div className="dir-page">
       <header className="dir-topbar">
@@ -167,8 +255,16 @@ const Directory = () => {
         </div>
 
         <div className="dir-actions">
+          <div className="dir-user-chip">
+            <FaUserCircle size={28} className="dir-user-icon" />
+            <div className="dir-user-meta">
+              <div className="dir-user-name">{profile.name || "User"}</div>
+              <div className="dir-user-email">{profile.email || "No email"}</div>
+            </div>
+          </div>
           <label className="dir-upload">
-            Upload files
+            <FaUpload />
+            <span>Upload</span>
             <input
               className="dir-upload-input"
               multiple
@@ -177,16 +273,12 @@ const Directory = () => {
             />
           </label>
           <button className="dir-button ghost" onClick={createDir}>
-            New folder
+            <FaFolderPlus />
+            <span>New Folder</span>
           </button>
-          <button
-            className="dir-button danger"
-            onClick={() => {
-              window.localStorage.clear();
-              setRootDirId("");
-            }}
-          >
-            Logout
+          <button className="dir-button danger" onClick={handleLogout} disabled={isLoggingOut}>
+            <IoLogOut size={20} />
+            <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           </button>
         </div>
       </header>
@@ -204,11 +296,12 @@ const Directory = () => {
       <section className="dir-section">
         <div className="dir-section-title">Folders</div>
         <div className="dir-grid">
-          
           {directoriesList.map(({ dirName, id }) => (
             <div className="dir-card" key={id}>
               <div className="dir-card-main">
-                <div className="dir-icon dir-icon-folder">D</div>
+                <div className="dir-icon dir-icon-folder">
+                  <FaFolder />
+                </div>
                 <div>
                   <div className="dir-card-title">{dirName}</div>
                   <div className="dir-card-meta">Folder</div>
@@ -216,7 +309,8 @@ const Directory = () => {
               </div>
               <div className="dir-card-actions">
                 <Link className="dir-button primary" to={`/directory/${id}`}>
-                  Open
+                  <FaFolder />
+                  <span>Open</span>
                 </Link>
                 <button
                   className="dir-button ghost"
@@ -224,7 +318,8 @@ const Directory = () => {
                     handleRename(id, dirName, "directory");
                   }}
                 >
-                  Rename
+                  <FaPen />
+                  <span>Rename</span>
                 </button>
                 <button
                   className="dir-button danger"
@@ -232,7 +327,8 @@ const Directory = () => {
                     deleteHandel(id, "directory");
                   }}
                 >
-                  Delete
+                  <FaTrash />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -247,10 +343,12 @@ const Directory = () => {
       <section className="dir-section">
         <div className="dir-section-title">Files</div>
         <div className="dir-grid">
-          {fileList.map(({ fileName, id }) => (
+          {fileList.map(({ fileName, id, extension }) => (
             <div className="dir-card" key={id}>
               <div className="dir-card-main">
-                <div className="dir-icon dir-icon-file">F</div>
+                <div className="dir-icon dir-icon-file">
+                  {findLogo(extension)}
+                </div>
                 <div>
                   <div className="dir-card-title">{fileName}</div>
                   <div className="dir-card-meta">File</div>
@@ -263,13 +361,15 @@ const Directory = () => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Preview
+                  <FaEye />
+                  <span>Preview</span>
                 </a>
                 <a
                   className="dir-button ghost"
                   href={`${baseURL}/file/${id}?action=download`}
                 >
-                  Download
+                  <FaDownload />
+                  <span>Download</span>
                 </a>
                 <button
                   className="dir-button ghost"
@@ -277,7 +377,8 @@ const Directory = () => {
                     handleRename(id, fileName, "file");
                   }}
                 >
-                  Rename
+                  <FaPen />
+                  <span>Rename</span>
                 </button>
                 <button
                   className="dir-button danger"
@@ -285,7 +386,8 @@ const Directory = () => {
                     deleteHandel(id, "file");
                   }}
                 >
-                  Delete
+                  <FaTrash />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -347,10 +449,12 @@ const Directory = () => {
                   setRenameId("");
                 }}
               >
-                Cancel
+                <FaTimes />
+                <span>Cancel</span>
               </button>
               <button className="dir-button primary" onClick={handleSave}>
-                Save
+                <FaSave />
+                <span>Save</span>
               </button>
             </div>
           </div>
