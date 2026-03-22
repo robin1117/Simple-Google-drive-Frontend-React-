@@ -19,6 +19,7 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
+import { baseUrl } from "./baseUrl";
 
 let logoArr = [
   { exe: ".mp4", logo: <BsFiletypeMp4 size={30} /> },
@@ -45,9 +46,12 @@ const Directory = () => {
   const [uploadQueue, setUploadQueue] = useState([]);
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [invalidDirectory, setInvalidDirectory] = useState(false);
 
-  const baseURL = "http://localhost:5000";
+  
+  const baseURL = baseUrl();
   const fetchURL = `${baseURL}/directory/${dirId ?? ""}`;
+
 
   async function fetchData() {
     try {
@@ -57,10 +61,20 @@ const Directory = () => {
 
       const data = await res.json();
       console.log(data);
+
+      if (data.error == "Invalid Id") {
+        setInvalidDirectory(true);
+        setDirectoriesList([]);
+        setFileList([]);
+        setCurrentDir("");
+        return;
+      }
+
       if (data.error) {
         navigate("/login");
         return;
       }
+      setInvalidDirectory(false);
       setDirectoriesList(data.directories);
       setFileList(data.files);
       setCurrentDir(data.dirName);
@@ -206,6 +220,7 @@ const Directory = () => {
     if (!renameValue.trim()) {
       return;
     }
+    console.log(`${baseURL}/${renameTarget}/${renameId}`);
     let response = await fetch(`${baseURL}/${renameTarget}/${renameId}`, {
       method: "PATCH",
       headers: {
@@ -238,9 +253,24 @@ const Directory = () => {
   }
 
   function findLogo(exection) {
-    const normalized = typeof exection === "string" ? exection.toLowerCase() : "";
+    const normalized =
+      typeof exection === "string" ? exection.toLowerCase() : "";
     let logoObj = logoArr.find((logoObj) => logoObj.exe == normalized);
     return logoObj?.logo ?? <FaFileAlt size={24} />;
+  }
+
+  if (invalidDirectory) {
+    return (
+      <div className="dir-page">
+        <section className="dir-section">
+          <div className="dir-section-title">Directory Error</div>
+          <div className="dir-empty">
+            The directory you are trying to access is not available or not
+            valid.
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -249,7 +279,7 @@ const Directory = () => {
         <div className="dir-brand">
           <div className="dir-logo">SD</div>
           <div>
-            <div className="dir-title">Simple Drive</div>
+            <div className="dir-title">Neha Drive</div>
             <div className="dir-subtitle">Workspace files and folders</div>
           </div>
         </div>
@@ -259,7 +289,9 @@ const Directory = () => {
             <FaUserCircle size={28} className="dir-user-icon" />
             <div className="dir-user-meta">
               <div className="dir-user-name">{profile.name || "User"}</div>
-              <div className="dir-user-email">{profile.email || "No email"}</div>
+              <div className="dir-user-email">
+                {profile.email || "No email"}
+              </div>
             </div>
           </div>
           <label className="dir-upload">
@@ -276,7 +308,11 @@ const Directory = () => {
             <FaFolderPlus />
             <span>New Folder</span>
           </button>
-          <button className="dir-button danger" onClick={handleLogout} disabled={isLoggingOut}>
+          <button
+            className="dir-button danger"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
             <IoLogOut size={20} />
             <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           </button>
@@ -296,8 +332,8 @@ const Directory = () => {
       <section className="dir-section">
         <div className="dir-section-title">Folders</div>
         <div className="dir-grid">
-          {directoriesList.map(({ dirName, id }) => (
-            <div className="dir-card" key={id}>
+          {directoriesList.map(({ dirName, _id }) => (
+            <div className="dir-card" key={_id}>
               <div className="dir-card-main">
                 <div className="dir-icon dir-icon-folder">
                   <FaFolder />
@@ -308,14 +344,14 @@ const Directory = () => {
                 </div>
               </div>
               <div className="dir-card-actions">
-                <Link className="dir-button primary" to={`/directory/${id}`}>
+                <Link className="dir-button primary" to={`/directory/${_id}`}>
                   <FaFolder />
                   <span>Open</span>
                 </Link>
                 <button
                   className="dir-button ghost"
                   onClick={() => {
-                    handleRename(id, dirName, "directory");
+                    handleRename(_id, dirName, "directory");
                   }}
                 >
                   <FaPen />
@@ -324,7 +360,7 @@ const Directory = () => {
                 <button
                   className="dir-button danger"
                   onClick={() => {
-                    deleteHandel(id, "directory");
+                    deleteHandel(_id, "directory");
                   }}
                 >
                   <FaTrash />
@@ -343,8 +379,8 @@ const Directory = () => {
       <section className="dir-section">
         <div className="dir-section-title">Files</div>
         <div className="dir-grid">
-          {fileList.map(({ fileName, id, extension }) => (
-            <div className="dir-card" key={id}>
+          {fileList.map(({ fileName, _id, extension }) => (
+            <div className="dir-card" key={_id}>
               <div className="dir-card-main">
                 <div className="dir-icon dir-icon-file">
                   {findLogo(extension)}
@@ -357,38 +393,38 @@ const Directory = () => {
               <div className="dir-card-actions">
                 <a
                   className="dir-button ghost"
-                  href={`${baseURL}/file/${id}?action=preview`}
+                  href={`${baseURL}/file/${_id}?action=preview`}
                   target="_blank"
                   rel="noreferrer"
                 >
                   <FaEye />
                   <span>Preview</span>
                 </a>
-                <a
+                {/* <a
                   className="dir-button ghost"
-                  href={`${baseURL}/file/${id}?action=download`}
+                  href={`${baseURL}/file/${_id}?action=download`}
                 >
                   <FaDownload />
                   <span>Download</span>
-                </a>
-                <button
+                </a> */}
+                {/* <button
                   className="dir-button ghost"
                   onClick={() => {
-                    handleRename(id, fileName, "file");
+                    handleRename(_id, fileName, "file");
                   }}
                 >
                   <FaPen />
                   <span>Rename</span>
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   className="dir-button danger"
                   onClick={() => {
-                    deleteHandel(id, "file");
+                    deleteHandel(_id, "file");
                   }}
                 >
                   <FaTrash />
                   <span>Delete</span>
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

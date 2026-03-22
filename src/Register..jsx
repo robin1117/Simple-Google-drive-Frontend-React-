@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { baseUrl } from "./baseUrl";
 
 const Register = () => {
   let navigate = useNavigate();
@@ -21,7 +22,7 @@ const Register = () => {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    let response = await fetch("http://localhost:5000/user/register", {
+    let response = await fetch(`${baseUrl()}/user/register`, {
       method: "post",
       headers: {
         "content-type": "application/json",
@@ -34,10 +35,11 @@ const Register = () => {
       setError(data.error);
       return;
     }
+    setError('')
 
     setIsSuccess(true);
     setTimeout(() => {
-      // navigate("/");
+      navigate("/");
     }, 2000);
   }
 
