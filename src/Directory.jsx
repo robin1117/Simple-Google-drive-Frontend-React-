@@ -225,7 +225,6 @@ const Directory = () => {
       method: "PATCH",
       headers: {
         "content-type": "application/json",
-        fileName: renameValue,
       },
       body: JSON.stringify({ fileName: `${renameValue}` }),
       credentials: "include",
