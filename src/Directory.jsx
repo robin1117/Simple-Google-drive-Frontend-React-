@@ -407,7 +407,7 @@ const Directory = () => {
                   <FaDownload />
                   <span>Download</span>
                 </a> */}
-                {/* <button
+                <button
                   className="dir-button ghost"
                   onClick={() => {
                     handleRename(_id, fileName, "file");
@@ -415,7 +415,7 @@ const Directory = () => {
                 >
                   <FaPen />
                   <span>Rename</span>
-                </button> */}
+                </button>
                 {/* <button
                   className="dir-button danger"
                   onClick={() => {

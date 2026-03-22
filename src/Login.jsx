@@ -5,8 +5,8 @@ import { baseUrl } from "./baseUrl";
 const Login = () => {
   let navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: "robinsingh1117@gmail.com",
-    password: "12345",
+    email: "neha@gmail.com",
+    password: "abcd",
   });
   const [isLogined, isLoginedSet] = useState(false);
   const [error, errorSet] = useState("");
