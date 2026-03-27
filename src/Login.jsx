@@ -4,9 +4,10 @@ import { baseUrl } from "./baseUrl";
 
 const Login = () => {
   let navigate = useNavigate();
+  // Default values set kar di hain taaki use zyada mehnat na karni pade
   const [formData, setFormData] = useState({
-    email: "neha@gmail.com",
-    password: "abcd",
+    email: "themostbeautiful@neha.com", 
+    password: "", 
   });
   const [isLogined, isLoginedSet] = useState(false);
   const [error, errorSet] = useState("");
@@ -33,7 +34,8 @@ const Login = () => {
 
     const data = await response.json();
     if (data.error) {
-      return errorSet(data.error);
+      // Error message ko bhi thoda filmy rakhte hain
+      return errorSet("Galat password! Itni jaldi bhool gayi? 😏");
     }
     isLoginedSet(true);
     setTimeout(() => {
@@ -41,21 +43,23 @@ const Login = () => {
     }, 1000);
   }
 
-  const message = error ? error : isLogined ? "Logged in successfully." : "";
+  // Success message ko customize kiya
+  const message = error ? error : isLogined ? "Access Granted! Chalo......." : "";
   const messageState = error ? "is-error" : isLogined ? "is-success" : "";
 
   return (
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <div className="login-badge">Simple Drive</div>
-          <h2>Welcome back</h2>
-          <p>Sign in to keep your folders synced and secure.</p>
+          {/* Badge badal diya */}
+          <div className="login-badge">NEHA ONLY</div> 
+          <h2>Identify Yourself!</h2>
+          <p>Are you the real Neha? Prove it by entering the secret key. 🔐</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="login-label" htmlFor="email">
-            Email
+            V.I.P Email
           </label>
           <input
             id="email"
@@ -64,12 +68,12 @@ const Login = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="you@company.com"
+            placeholder="themostbeautiful@neha.com"
             required
           />
 
           <label className="login-label" htmlFor="password">
-            Password
+            Secret Password (Hint: Sundar...)
           </label>
           <input
             id="password"
@@ -78,12 +82,12 @@ const Login = () => {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="••••••••"
+            placeholder="Kuch yaad aaya?"
             required
           />
 
           <button className="login-button" type="submit">
-            Log in
+            Unlock Cuteness ✨
           </button>
 
           {message ? (
@@ -92,10 +96,10 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          New here?{" "}
-          <Link className="login-link" to={"/register"}>
-            Create an account
-          </Link>
+          Guest access?{" "}
+          <span style={{color: '#8b5cf6', cursor: 'not-allowed', textDecoration: 'underline'}}>
+            Not available for strangers!
+          </span>
         </div>
       </div>
     </div>
