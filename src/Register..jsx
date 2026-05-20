@@ -39,7 +39,7 @@ const Register = () => {
 
     setIsSuccess(true);
     setTimeout(() => {
-      navigate("/");
+      navigate("/login");
     }, 2000);
   }
 
@@ -76,7 +76,7 @@ const Register = () => {
           <input
             id="email"
             className="login-input"
-            type="email"
+            type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}

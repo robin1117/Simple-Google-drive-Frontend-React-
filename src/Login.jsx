@@ -97,8 +97,8 @@ const Login = () => {
 
         <div className="login-footer">
           Guest access?{" "}
-          <span style={{color: '#8b5cf6', cursor: 'not-allowed', textDecoration: 'underline'}}>
-            Not available for strangers!
+          <span style={{color: '#8b5cf6', cursor:"pointer", textDecoration: 'underline'}} onClick={()=>{navigate("/register");}}>
+           le for strangers!
           </span>
         </div>
       </div>

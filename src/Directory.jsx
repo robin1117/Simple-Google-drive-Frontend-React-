@@ -277,8 +277,8 @@ const Directory = () => {
         <div className="dir-brand">
           <div className="dir-logo">SD</div>
           <div>
-            <div className="dir-title headtxt">Rare Neha Collection</div>
-            <div className="dir-subtitle">Cute❤️‍🔥 Collection </div>
+            <div className="dir-title headtxt">Bhakti⭐</div>
+            <div className="dir-subtitle">Collection</div>
           </div>
         </div>
 
@@ -398,15 +398,15 @@ const Directory = () => {
                   <FaEye />
                   <span>Preview</span>
                 </a>
-                {/* <a
+                <a
                   className="dir-button ghost"
                   href={`${baseURL}/file/${_id}?action=download`}
                 >
                   <FaDownload />
                   <span>Download</span>
-                </a> */}
+                </a>
 
-                {/* <button
+                <button
                   className="dir-button ghost"
                   onClick={() => {
                     handleRename(_id, fileName, "file");
@@ -414,8 +414,8 @@ const Directory = () => {
                 >
                   <FaPen />
                   <span>Rename</span>
-                </button> */}
-                {/* <button
+                </button>
+                <button
                   className="dir-button danger"
                   onClick={() => {
                     deleteHandel(_id, "file");
@@ -423,117 +423,10 @@ const Directory = () => {
                 >
                   <FaTrash />
                   <span>Delete</span>
-                </button> */}
+                </button>
               </div>
             </div>
           ))}
-
-          <div
-            className="dir-card coming-soon-card"
-            onClick={() => {
-              setIsCommingSoonOpen(true);
-            }}
-          >
-            <div className="dir-card-main">
-              <div className="dir-icon dir-icon-file pulse-icon">❤️</div>
-              <div>
-                <div className="dir-card-title">Coming Soon</div>
-                <div className="dir-card-meta">July 2026</div>
-              </div>
-            </div>
-
-            <div className="dir-card-actions">
-              <button className="dir-button disabled">
-                <FaEye />
-                <span>Preview</span>
-              </button>
-            </div>
-          </div>
-          
-          <div
-            className="dir-card coming-soon-card"
-            onClick={() => {
-              setIsCommingSoonOpen(true);
-            }}
-          >
-            <div className="dir-card-main">
-              <div className="dir-icon dir-icon-file pulse-icon">❤️</div>
-              <div>
-                <div className="dir-card-title">Coming Soon</div>
-                <div className="dir-card-meta">July 2026</div>
-              </div>
-            </div>
-
-            <div className="dir-card-actions">
-              <button className="dir-button disabled">
-                <FaEye />
-                <span>Preview</span>
-              </button>
-            </div>
-          </div>
-          <div
-            className="dir-card coming-soon-card"
-            onClick={() => {
-              setIsCommingSoonOpen(true);
-            }}
-          >
-            <div className="dir-card-main">
-              <div className="dir-icon dir-icon-file pulse-icon">❤️</div>
-              <div>
-                <div className="dir-card-title">Coming Soon</div>
-                <div className="dir-card-meta">July 2026</div>
-              </div>
-            </div>
-
-            <div className="dir-card-actions">
-              <button className="dir-button disabled">
-                <FaEye />
-                <span>Preview</span>
-              </button>
-            </div>
-          </div>
-          <div
-            className="dir-card coming-soon-card"
-            onClick={() => {
-              setIsCommingSoonOpen(true);
-            }}
-          >
-            <div className="dir-card-main">
-              <div className="dir-icon dir-icon-file pulse-icon">❤️</div>
-              <div>
-                <div className="dir-card-title">Coming Soon</div>
-                <div className="dir-card-meta">July 2026</div>
-              </div>
-            </div>
-
-            <div className="dir-card-actions">
-              <button className="dir-button disabled">
-                <FaEye />
-                <span>Preview</span>
-              </button>
-            </div>
-          </div>
-          <div
-            className="dir-card coming-soon-card"
-            onClick={() => {
-              setIsCommingSoonOpen(true);
-            }}
-          >
-            <div className="dir-card-main">
-              <div className="dir-icon dir-icon-file pulse-icon">❤️</div>
-              <div>
-                <div className="dir-card-title">Coming Soon</div>
-                <div className="dir-card-meta">July 2026</div>
-              </div>
-            </div>
-
-            <div className="dir-card-actions">
-              <button className="dir-button disabled">
-                <FaEye />
-                <span>Preview</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {fileList.length === 0 ? (
