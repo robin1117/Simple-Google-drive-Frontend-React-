@@ -1,18 +1,85 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { baseUrl } from "./baseUrl";
+import "./register.css";
 
 const Register = () => {
   let navigate = useNavigate();
+  const timerRef = useRef(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [isRegisterBtnDisable, setIsRegisterBtnDisable] = useState(false);
+  const [isFirstOtpSend, setIsFirstOtpSend] = useState(false);
+  const [isOtpInputOpen, setIsOtpInputOpen] = useState(false);
+  const [isCounterRunning, setIsCounterRunning] = useState(false);
+  const [counter, setCounter] = useState(120);
+  const [VerifyDisable, setVerifyDisable] = useState(false);
   const [formData, setFormData] = useState({
     name: "nancy",
     email: "robinsingh@gmail.com",
     password: "abcd",
   });
 
+  async function handelVerify(e) {
+    e.preventDefault();
+    setVerifyDisable(true);
+    try {
+      let response = await fetch(`${baseUrl()}/auth/sent-otp`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      let data = await response.json();
+
+      if (!data.success) {
+        setIsFirstOtpSend(false);
+        setError(data.message);
+      } else {
+        triggerCounter();
+        setError("");
+        setIsFirstOtpSend(true);
+        setIsOtpInputOpen(true);
+        setIsRegisterBtnDisable(true);
+      }
+      console.log(data);
+    } catch (error) {
+      setError("unable to sent OTP");
+      console.log(error);
+    }
+  }
+
+  function triggerCounter(params) {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    setIsCounterRunning(true);
+    timerRef.current = setInterval(() => {
+      setCounter((pre) => {
+        if (pre <= 0) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          setVerifyDisable(false);
+          setIsCounterRunning(false);
+          return 120;
+        }
+        return pre - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
   function handleChange(e) {
+    setError("");
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -21,29 +88,51 @@ const Register = () => {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    let response = await fetch(`${baseUrl()}/user/register`, {
-      method: "post",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    let data = await response.json();
+    try {
+      e.preventDefault();
+      let responseForVerifiy = await fetch(`${baseUrl()}/auth/verify-otp`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      let dataForVerifiy = await responseForVerifiy.json();
+      console.log(dataForVerifiy);
+      if (!dataForVerifiy.success) {
+        setError(dataForVerifiy.message);
+        return;
+      }
 
-    if (data.error) {
-      setError(data.error);
-      return;
+      // -----------------------------------------------
+      let response = await fetch(`${baseUrl()}/user/register`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      let data = await response.json();
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      setError("");
+      setIsSuccess(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      setError("Something went wrong. Please try again.");
+      console.log(error);
     }
-    setError('')
-
-    setIsSuccess(true);
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
   }
 
-  const message = error ? error : isSuccess ? "Account created successfully." : "";
+  const message = error
+    ? error
+    : isSuccess
+      ? "Account created successfully."
+      : "";
   const messageState = error ? "is-error" : isSuccess ? "is-success" : "";
 
   return (
@@ -73,20 +162,55 @@ const Register = () => {
           <label className="login-label" htmlFor="email">
             Email
           </label>
-          <input
-            id="email"
-            className="login-input"
-            type="text"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="you@company.com"
-            required
-          />
+          <div className="emailBox">
+            <input
+              id="email"
+              className="login-input"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@company.com"
+              required
+            />
+            <button
+              type="button"
+              className="verifybtn"
+              onClick={handelVerify}
+              disabled={VerifyDisable}
+            >
+              {isCounterRunning
+                ? counter
+                : isFirstOtpSend
+                  ? "Resend"
+                  : "Verifiy"}
+            </button>
+          </div>
+
+          {isOtpInputOpen ? (
+            <div>
+              <label className="login-label" htmlFor="otp">
+                OTP
+              </label>
+              <input
+                id="otp"
+                className="login-input"
+                type="text"
+                name="otp"
+                value={formData.otp}
+                onChange={handleChange}
+                placeholder="check your mail"
+                required
+              />
+            </div>
+          ) : (
+            ""
+          )}
 
           <label className="login-label" htmlFor="password">
             Password
           </label>
+
           <input
             id="password"
             className="login-input"
@@ -98,7 +222,11 @@ const Register = () => {
             required
           />
 
-          <button className="login-button" type="submit">
+          <button
+            className="login-button"
+            type="submit"
+            disabled={!isRegisterBtnDisable}
+          >
             Create account
           </button>
 

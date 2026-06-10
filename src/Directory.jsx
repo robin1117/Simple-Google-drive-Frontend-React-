@@ -127,6 +127,24 @@ const Directory = () => {
       setIsLoggingOut(false);
     }
   }
+  async function handleLogoutAll() {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+    try {
+      await fetch(`${baseURL}/user/logoutAll`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    } finally {
+      navigate("/login");
+      setIsLoggingOut(false);
+    }
+  }
 
   async function uploadHandle(e) {
     const files = Array.from(e.target.files);
@@ -306,6 +324,7 @@ const Directory = () => {
             <FaFolderPlus />
             <span>New Folder</span>
           </button>
+
           <button
             className="dir-button danger"
             onClick={handleLogout}
@@ -314,6 +333,15 @@ const Directory = () => {
             <IoLogOut size={20} />
             <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           </button>
+          <button
+            className="dir-button danger"
+            onClick={handleLogoutAll}
+            disabled={isLoggingOut}
+          >
+            <IoLogOut size={20} />
+            <span>{isLoggingOut ? "Logging out from All..." : "Logout All"}</span>
+          </button>
+
         </div>
       </header>
 

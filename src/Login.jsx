@@ -6,8 +6,8 @@ const Login = () => {
   let navigate = useNavigate();
   // Default values set kar di hain taaki use zyada mehnat na karni pade
   const [formData, setFormData] = useState({
-    email: "themostbeautiful@neha.com", 
-    password: "", 
+    email: "themostbeautiful@neha.com",
+    password: "",
   });
   const [isLogined, isLoginedSet] = useState(false);
   const [error, errorSet] = useState("");
@@ -33,9 +33,10 @@ const Login = () => {
     });
 
     const data = await response.json();
+
     if (data.error) {
       // Error message ko bhi thoda filmy rakhte hain
-      return errorSet("Galat password! Itni jaldi bhool gayi? 😏");
+      return errorSet(data.error);
     }
     isLoginedSet(true);
     setTimeout(() => {
@@ -44,7 +45,11 @@ const Login = () => {
   }
 
   // Success message ko customize kiya
-  const message = error ? error : isLogined ? "Access Granted! Chalo......." : "";
+  const message = error
+    ? error
+    : isLogined
+      ? "Access Granted! Chalo......."
+      : "";
   const messageState = error ? "is-error" : isLogined ? "is-success" : "";
 
   return (
@@ -52,7 +57,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           {/* Badge badal diya */}
-          <div className="login-badge">NEHA ONLY</div> 
+          <div className="login-badge">NEHA ONLY</div>
           <h2>Identify Yourself!</h2>
           <p>Are you the real Neha? Prove it by entering the secret key. 🔐</p>
         </div>
@@ -68,7 +73,7 @@ const Login = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="themostbeautiful@neha.com"
+            placeholder="nancy@gmail.com"
             required
           />
 
@@ -97,8 +102,17 @@ const Login = () => {
 
         <div className="login-footer">
           Guest access?{" "}
-          <span style={{color: '#8b5cf6', cursor:"pointer", textDecoration: 'underline'}} onClick={()=>{navigate("/register");}}>
-           le for strangers!
+          <span
+            style={{
+              color: "#8b5cf6",
+              cursor: "pointer",
+              textDecoration: "underline",
+            }}
+            onClick={() => {
+              navigate("/register");
+            }}
+          >
+            le for strangers!
           </span>
         </div>
       </div>
