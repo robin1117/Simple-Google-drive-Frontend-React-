@@ -21,6 +21,7 @@ const Register = () => {
   });
 
   async function handelVerify(e) {
+    console.log('verifiy');
     e.preventDefault();
     setVerifyDisable(true);
     try {
@@ -79,6 +80,7 @@ const Register = () => {
   }, []);
 
   function handleChange(e) {
+    setVerifyDisable(false)
     setError("");
     const { name, value } = e.target;
     setFormData((prev) => ({
