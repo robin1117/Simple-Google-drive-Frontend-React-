@@ -1,37 +1,17 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
-import { baseUrl } from "./baseUrl";
-import { useNavigate } from "react-router-dom";
+import { baseUrl } from "../baseUrl";
+import { Link, useNavigate } from "react-router-dom";
+import { sendingAuthCode } from "../../utils/authCodeLogin";
 
 export default function Login() {
-    let navigate = useNavigate();
-
-  async function sendingAuthCode(code) {
-    let response = await fetch("http://localhost:5000/auth/auth-code", {
-      method: "post",
-      credentials: "include",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(code),
-    });
-
-    let { message, isLogin } = await response.json();
-    if (isLogin) {
-      navigate('/')
-    }
-    if (da) {
-    }
-  }
-
-  const handlingPopUpMessage = (e) => {
-    let { code, from } = e.data;
-    if (from === "Git_auth") {
-      console.log("sending");
-      sendingAuthCode({ code, from, orogin: e.origin });
-    }
-  };
+  const [username, setUsername] = useState("luicy@gmail.com");
+  const [password, setPassword] = useState("1234");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLogined, isLoginedSet] = useState(false);
+  const [error, errorSet] = useState("");
+  let navigate = useNavigate();
 
   useEffect(() => {
     window.addEventListener("message", handlingPopUpMessage);
@@ -40,12 +20,34 @@ export default function Login() {
     };
   }, []);
 
+  const handlingPopUpMessage = async (e) => {
+    let { code, from } = e.data;
+    if (from === "Git_auth") {
+      let { message, isLogin } = await sendingAuthCode({
+        code,
+        from,
+        origin: e.origin,
+      });
+      if (isLogin) {
+        navigate("/");
+      }
+    }
+  };
+
   const handleGoogleSignIn = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
+    onSuccess: async (tokenResponse) => {
       let { code, iss: origin } = tokenResponse;
-      sendingAuthCode({ code, from: "Google_auth", origin });
+      let { message, isLogin } = await sendingAuthCode({
+        code,
+        from: "Google_auth",
+        origin,
+      });
+      if (isLogin) {
+        navigate("/");
+      }
     },
     flow: "auth-code",
+
     onError: (error) => console.log("Login Failed:", error),
   });
 
@@ -55,13 +57,6 @@ export default function Login() {
     const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user`;
     window.open(githubUrl, "popup", "width=500 height=700 left=500 top=100");
   }
-
-  const [username, setUsername] = useState("luicy@gmail.com");
-  const [password, setPassword] = useState("1234");
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [isLogined, isLoginedSet] = useState(false);
-  const [error, errorSet] = useState("");
 
   async function handleSubmit(e) {
     try {
@@ -169,7 +164,15 @@ export default function Login() {
             Login
           </button>
 
+          {/* Error or Success Message */}
           <div className="text-red-600">{error}</div>
+
+          {isLogined && (
+            <div className="text-green-400">
+              Login successfully. Redirecting...
+            </div>
+          )}
+
           {/* Divider */}
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-200" />
@@ -231,15 +234,12 @@ export default function Login() {
             >
               Forgot password?
             </a>
-            <a
-              href="#"
+            <Link
+              to="/register"
               className=" ml-auto text-center text-sm text-gray-500 transition-colors hover:text-gray-700"
-              onClick={() => {
-                navigate("/register");
-              }}
             >
               Sign up
-            </a>
+            </Link>
           </div>
         </form>
       </div>

@@ -127,6 +127,7 @@ const Directory = () => {
       setIsLoggingOut(false);
     }
   }
+
   async function handleLogoutAll() {
     if (isLoggingOut) {
       return;
@@ -290,8 +291,8 @@ const Directory = () => {
   }
 
   return (
-    <div className="dir-page">
-      <header className="dir-topbar">
+    <div className="dar">
+      <header className="dark:bg-amber-700">
         <div className="dir-brand">
           <div className="dir-logo">SD</div>
           <div>
@@ -339,9 +340,10 @@ const Directory = () => {
             disabled={isLoggingOut}
           >
             <IoLogOut size={20} />
-            <span>{isLoggingOut ? "Logging out from All..." : "Logout All"}</span>
+            <span>
+              {isLoggingOut ? "Logging out from All..." : "Logout All"}
+            </span>
           </button>
-
         </div>
       </header>
 
