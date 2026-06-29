@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BsFiletypeMp4 } from "react-icons/bs";
 import { BsFiletypePng } from "react-icons/bs";
@@ -20,6 +20,9 @@ import {
 } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
 import { baseUrl } from "./baseUrl";
+import { getProfileApi } from "./apis/getProfileApi";
+import { useProfileContext } from "./context/profileContext";
+import axios from "axios";
 
 let logoArr = [
   { exe: ".mp4", logo: <BsFiletypeMp4 size={30} /> },
@@ -31,10 +34,11 @@ let logoArr = [
 ];
 
 const Directory = () => {
+  let { profile, setProfile } = useProfileContext();
+
   let navigate = useNavigate();
 
-  let dirID = useParams();
-  let dirId = dirID.dirId;
+  let { dirId } = useParams();
 
   const [directoriesList, setDirectoriesList] = useState([]);
   const [currentDir, setCurrentDir] = useState("");
@@ -45,11 +49,11 @@ const Directory = () => {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isCommingSoonOpen, setIsCommingSoonOpen] = useState(false);
   const [uploadQueue, setUploadQueue] = useState([]);
-  const [profile, setProfile] = useState({ name: "", email: "" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [invalidDirectory, setInvalidDirectory] = useState(false);
 
   const baseURL = baseUrl();
+
   const fetchURL = `${baseURL}/directory/${dirId ?? ""}`;
 
   async function fetchData() {
@@ -59,7 +63,6 @@ const Directory = () => {
       });
 
       const data = await res.json();
-      console.log(data);
 
       if (data.error == "Invalid Id") {
         setInvalidDirectory(true);
@@ -84,11 +87,7 @@ const Directory = () => {
 
   async function fetchProfile() {
     try {
-      const res = await fetch(`${baseURL}/user`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await res.json();
+      const { data } = await getProfileApi();
 
       if (data.error) {
         navigate("/login");
@@ -98,8 +97,11 @@ const Directory = () => {
       setProfile({
         name: data.name ?? "",
         email: data.email ?? "",
+        role: data.role ?? "",
+        picture: data.picture ?? "",
       });
     } catch (error) {
+      console.log(error);
       console.error("Failed to fetch profile:", error);
     }
   }
@@ -154,7 +156,7 @@ const Directory = () => {
       const xhr = new XMLHttpRequest();
       xhr.withCredentials = true;
       const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      console.log(uploadId);
+
       setUploadQueue((prev) => [
         ...prev,
         { id: uploadId, name: file.name, percent: 0, status: "uploading" },
@@ -162,11 +164,8 @@ const Directory = () => {
 
       let formData = new FormData();
       formData.append("file", file);
-
       xhr.open("POST", `${baseURL}/file/${file.name}`, true);
-
       xhr.responseType = "json";
-
       if (dirId) {
         xhr.setRequestHeader("dirid", dirId);
       }
@@ -216,6 +215,65 @@ const Directory = () => {
 
     e.target.value = "";
   }
+
+  // async function uploadHandle(e) {
+  //   const files = Array.from(e.target.files);
+
+  //   const uploadPromises = files.map((file) => {
+  //     const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  //     setUploadQueue((prev) => [
+  //       ...prev,
+  //       { id: uploadId, name: file.name, percent: 0, status: "uploading" },
+  //     ]);
+
+  //     const formData = new FormData();
+  //     formData.append("file", file);
+
+  //     return axios
+  //       .post(`${baseURL}/file/${file.name}`, formData, {
+  //         withCredentials: true,
+  //         headers: dirId ? { dirid: dirId } : {},
+  //         onUploadProgress: (event) => {
+  //           if (event.lengthComputable) {
+  //             const percent = Math.round((event.loaded * 100) / event.total);
+  //             setUploadQueue((prev) =>
+  //               prev.map((item) =>
+  //                 item.id === uploadId ? { ...item, percent } : item,
+  //               ),
+  //             );
+  //           }
+  //         },
+  //       })
+  //       .then((response) => {
+  //         console.log("Uploaded:", file.name, response.data);
+  //         setUploadQueue((prev) =>
+  //           prev.map((item) =>
+  //             item.id === uploadId
+  //               ? { ...item, percent: 100, status: "done" }
+  //               : item,
+  //           ),
+  //         );
+  //         setTimeout(() => {
+  //           setUploadQueue((prev) =>
+  //             prev.filter((item) => item.id !== uploadId),
+  //           );
+  //         }, 1400);
+  //       })
+  //       .catch((err) => {
+  //         console.error("Upload failed:", file.name);
+  //         setUploadQueue((prev) =>
+  //           prev.map((item) =>
+  //             item.id === uploadId ? { ...item, status: "error" } : item,
+  //           ),
+  //         );
+  //       });
+  //   });
+
+  //   await Promise.all(uploadPromises);
+  //   fetchData();
+  //   e.target.value = "";
+  // }
 
   async function deleteHandel(id, fileordir) {
     let response = await fetch(`${baseURL}/${fileordir}/${id}`, {
