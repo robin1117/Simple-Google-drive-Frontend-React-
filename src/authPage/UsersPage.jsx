@@ -4,19 +4,26 @@ import { baseUrl } from "../baseUrl";
 import { useNavigate } from "react-router-dom";
 import { useProfileContext } from "../context/profileContext";
 import { getProfileApi } from "../apis/getProfileApi";
+import { logoutWithUserId } from "../apis/logoutWithUserId";
 
 export default function UsersPage() {
   let { profile, setProfile } = useProfileContext();
   const [users, setUsers] = useState([]);
   let nevigate = useNavigate();
 
-  const logoutUser = (userId) => {
-    alert(`Logging out user with ID: ${userId}`);
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? { ...user, isLoggedIn: false } : user,
-      ),
-    );
+  const logoutUser = async (user) => {
+    let confirming = confirm(`Logging out user with ID: ${user.email}`);
+    if (!confirming) return;
+
+    let data = await logoutWithUserId(user.id);
+
+    if (data.statusText == "OK") {
+      data.data.message;
+
+      alert(data.data.message);
+
+      fetchUsers();
+    }
   };
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export default function UsersPage() {
       const response = await fetch(`${baseUrl()}/users`, {
         credentials: "include",
       });
+
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -69,7 +77,10 @@ export default function UsersPage() {
   return (
     <div className="users-container">
       <h1 className="title">All Users</h1>
-      <div> App:{profile.role}</div>
+      <div>
+        {" "}
+        <b>{profile.name}</b>: ({profile.role})
+      </div>
       <table className="user-table">
         <thead>
           <tr>
@@ -83,13 +94,16 @@ export default function UsersPage() {
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td>{user.name}</td>
+              <td>
+                {user.name}
+                {profile.email.includes(user.email) ? <b>(ME)</b> : ""}
+              </td>
               <td>{user.email}</td>
               <td>{user.isLoggedIn ? "Logged In" : "Logged Out"}</td>
               <td>
                 <button
                   className="logout-button"
-                  onClick={() => logoutUser(user.id)}
+                  onClick={() => logoutUser(user)}
                   disabled={!user.isLoggedIn}
                 >
                   Logout
