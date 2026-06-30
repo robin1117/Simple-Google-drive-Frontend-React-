@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useProfileContext } from "../context/profileContext";
 import { getProfileApi } from "../apis/getProfileApi";
 import { logoutWithUserId } from "../apis/logoutWithUserId";
+import { deleteUserWithUserId } from "../apis/deleteUserWithuserId";
 
 export default function UsersPage() {
   let { profile, setProfile } = useProfileContext();
@@ -74,6 +75,21 @@ export default function UsersPage() {
     }
   }
 
+  async function userDelete(user) {
+    let confirming = confirm(`You are about to delete user of Id: ${user.email}`);
+    if (!confirming) return;
+
+    let data = await deleteUserWithUserId(user.id);
+
+    if (data.statusText == "OK") {
+      data.data.message;
+
+      alert(data.data.message);
+
+      fetchUsers();
+    }
+  }
+
   return (
     <div className="users-container">
       <h1 className="title">All Users</h1>
@@ -113,7 +129,7 @@ export default function UsersPage() {
                 <td>
                   <button
                     className="logout-button delete-button"
-                    onClick={() => logoutUser(user.id)}
+                    onClick={() => userDelete(user)}
                     disabled={!user.isLoggedIn}
                   >
                     Delete
