@@ -5,6 +5,10 @@ import Register from "./authPage/Register.";
 import Login from "./authPage/Login";
 import "./index.css";
 
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Modal from 'react-modal';
+
 import { ProfileContextProvider } from "./context/profileContext";
 import Header from "./components/Header";
 import Layout from "./Layout";

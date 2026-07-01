@@ -6,10 +6,14 @@ import { useProfileContext } from "../context/profileContext";
 import { getProfileApi } from "../apis/getProfileApi";
 import { logoutWithUserId } from "../apis/logoutWithUserId";
 import { deleteUserWithUserId } from "../apis/deleteUserWithuserId";
+import Modal from "react-modal";
 
+Modal.setAppElement("#root");
 export default function UsersPage() {
   let { profile, setProfile } = useProfileContext();
   const [users, setUsers] = useState([]);
+  const [isPopUpOpen, setisPopUpOpen] = useState(false);
+  const [IdOfDeleteUser, setIdOfDeleteUser] = useState("");
   let nevigate = useNavigate();
 
   const logoutUser = async (user) => {
@@ -20,13 +24,12 @@ export default function UsersPage() {
 
     if (data.statusText == "OK") {
       data.data.message;
-
       alert(data.data.message);
-
       fetchUsers();
     }
   };
 
+  console.log(users);
   useEffect(() => {
     fetchUsers();
     fetchProfile();
@@ -75,18 +78,25 @@ export default function UsersPage() {
     }
   }
 
-  async function userDelete(user) {
-    let confirming = confirm(`You are about to delete user of Id: ${user.email}`);
+  async function userDelete(user, deleteType) {
+    let confirming = confirm(
+      `You are about to delete user of Id: ${user.email},${deleteType}`,
+    );
     if (!confirming) return;
-
-    let data = await deleteUserWithUserId(user.id);
-
-    if (data.statusText == "OK") {
-      data.data.message;
-
-      alert(data.data.message);
-
-      fetchUsers();
+    try {
+      let data = await deleteUserWithUserId(user.id, deleteType);
+      if (data.statusText == "OK") {
+        data.data.message;
+        alert(data.data.message);
+        setisPopUpOpen(false);
+        fetchUsers();
+      } else if (data.status == 401) {
+        console.log("you are not authorize for this");
+      }
+    } catch (error) {
+      if (error.response.status == 403) {
+        setisPopUpOpen(false);
+      }
     }
   }
 
@@ -129,8 +139,11 @@ export default function UsersPage() {
                 <td>
                   <button
                     className="logout-button delete-button"
-                    onClick={() => userDelete(user)}
-                    disabled={!user.isLoggedIn}
+                    onClick={() => {
+                      setisPopUpOpen(true);
+                      setIdOfDeleteUser(user);
+                    }}
+                    disabled={profile.email.includes(user.email)}
                   >
                     Delete
                   </button>
@@ -140,6 +153,38 @@ export default function UsersPage() {
           ))}
         </tbody>
       </table>
+      {isPopUpOpen && (
+        <div
+          onClick={() => setisPopUpOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-amber-400 p-6 rounded-lg shadow-2xl max-w-sm w-full mx-4 flex flex-col items-center gap-4 border border-amber-500"
+          >
+            <p className="text-gray-900 font-medium text-center">
+              Choose the way you want to delete user
+            </p>
+
+            {/* बटन कंटेनर */}
+            <div className="flex gap-3">
+              <button
+                className="logout-button delete-button bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+                onClick={() => userDelete(IdOfDeleteUser, "hard")}
+              >
+                hard Delete
+              </button>
+
+              <button
+                className="logout-button delete-button bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded transition-colors"
+                onClick={() => userDelete(IdOfDeleteUser, "soft")}
+              >
+                Soft Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -61,7 +61,11 @@ const Directory = () => {
       const res = await fetch(fetchURL, {
         credentials: "include",
       });
-
+      if (res.status == 403) {
+        console.log(await res.json());
+        navigate("/login");
+        return;
+      }
       const data = await res.json();
 
       if (data.error == "Invalid Id") {
