@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import "./UsersPage.css";
 import { baseUrl } from "../baseUrl";
 import { useNavigate } from "react-router-dom";
-import { useProfileContext } from "../context/profileContext";
+import { useHeaderContext } from "../context/HeaderContext";
 import { getProfileApi } from "../apis/getProfileApi";
-import { logoutWithUserId } from "../apis/logoutWithUserId";
 import { deleteUserWithUserId } from "../apis/deleteUserWithuserId";
 import Modal from "react-modal";
+import { logoutWithUserIdApi } from "../apis/POST_logout_apis";
 
 Modal.setAppElement("#root");
 export default function UsersPage() {
-  let { profile, setProfile } = useProfileContext();
+  let { profile, setProfile } = useHeaderContext();
   const [users, setUsers] = useState([]);
   const [isPopUpOpen, setisPopUpOpen] = useState(false);
   const [IdOfDeleteUser, setIdOfDeleteUser] = useState("");
@@ -20,7 +20,7 @@ export default function UsersPage() {
     let confirming = confirm(`Logging out user with ID: ${user.email}`);
     if (!confirming) return;
 
-    let data = await logoutWithUserId(user.id);
+    let data = await logoutWithUserIdApi(user.id);
 
     if (data.statusText == "OK") {
       data.data.message;

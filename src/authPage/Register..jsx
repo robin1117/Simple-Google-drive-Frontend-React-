@@ -3,7 +3,12 @@ import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { baseUrl } from "../baseUrl";
 import { Link, useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
-import { sendingAuthCode } from "../../utils/authCodeLogin";
+import { sendingAuthCode } from "../apis/POST_login_apis";
+import {
+  senOtpApi,
+  userRegisterApi,
+  verifiyOtpApi,
+} from "../apis/POST_register_apis";
 
 const Register = () => {
   const timerRef = useRef(null);
@@ -37,12 +42,12 @@ const Register = () => {
   const handlingPopUpMessage = async (e) => {
     let { code, from } = e.data;
     if (from === "Git_auth") {
-      let { message, isLogin } = await sendingAuthCode({
+      let data = await sendingAuthCode({
         code,
         from,
         origin: e.origin,
       });
-      if (isLogin) {
+      if (data.statusText == "OK") {
         navigate("/");
       }
     }
@@ -51,12 +56,12 @@ const Register = () => {
   const handleGoogleSignIn = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       let { code, iss: origin } = tokenResponse;
-      let { message, isLogin } = await sendingAuthCode({
+      let data = await sendingAuthCode({
         code,
         from: "Google_auth",
         origin,
       });
-      if (isLogin) {
+      if (data.statusText == "OK") {
         navigate("/");
       }
     },
@@ -75,28 +80,17 @@ const Register = () => {
   async function handleSubmit(e) {
     try {
       e.preventDefault();
-      const responseForVerify = await fetch(`${baseUrl()}/auth/verify-otp`, {
-        method: "post",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const dataForVerify = await responseForVerify.json();
+
+      const responseForVerify = await verifiyOtpApi(formData);
+      const dataForVerify = responseForVerify.data;
 
       if (!dataForVerify.success) {
         setError(dataForVerify.message);
         return;
       }
 
-      const response = await fetch(`${baseUrl()}/user/register`, {
-        method: "post",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
+      const response = await userRegisterApi(formData);
+      const data = response.data;
 
       if (data.error) {
         setError(data.error);
@@ -127,14 +121,8 @@ const Register = () => {
     e.preventDefault();
     setVerifyDisable(true);
     try {
-      const response = await fetch(`${baseUrl()}/auth/sent-otp`, {
-        method: "post",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
+      const response = await senOtpApi(formData);
+      const data = response.data;
 
       if (!data.success) {
         setIsFirstOtpSend(false);

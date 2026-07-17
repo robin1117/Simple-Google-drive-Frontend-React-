@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BsFiletypeMp4 } from "react-icons/bs";
 import { BsFiletypePng } from "react-icons/bs";
@@ -20,9 +20,17 @@ import {
 } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
 import { baseUrl } from "./baseUrl";
-import { getProfileApi } from "./apis/getProfileApi";
-import { useProfileContext } from "./context/profileContext";
-import axios from "axios";
+import { Breadcrumbs } from "./components/BreadCrumb";
+import { getDirectoryDataApi } from "./apis/getDirectoryData";
+import { FolderRow } from "./components/FolderRow";
+import { FileRow } from "./components/FileRow";
+import { RenameModal } from "./components/ReanameModal";
+import { deleteFileApi } from "./apis/DELETE_File_Folder_api";
+import { renameApi } from "./apis/PATCH_Rename_api";
+import { useDirectoryContext } from "./context/DirectoryContext";
+import { Grid3x3, List } from "lucide-react";
+import { FolderCard } from "./components/FolderCard";
+import { FileCard } from "./components/FileCard";
 
 let logoArr = [
   { exe: ".mp4", logo: <BsFiletypeMp4 size={30} /> },
@@ -34,259 +42,26 @@ let logoArr = [
 ];
 
 const Directory = () => {
-  let { profile, setProfile } = useProfileContext();
-
+  const { crumb, directoriesList, fileList, fetchData, isDragging } =
+    useDirectoryContext();
   let navigate = useNavigate();
-
   let { dirId } = useParams();
-
-  const [directoriesList, setDirectoriesList] = useState([]);
-  const [currentDir, setCurrentDir] = useState("");
-  const [fileList, setFileList] = useState([]);
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState("");
   const [renameTarget, setRenameTarget] = useState("");
   const [isRenameOpen, setIsRenameOpen] = useState(false);
-  const [isCommingSoonOpen, setIsCommingSoonOpen] = useState(false);
-  const [uploadQueue, setUploadQueue] = useState([]);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [invalidDirectory, setInvalidDirectory] = useState(false);
-
+  const [viewMode, setViewMode] = useState("list");
+  const [contextMenu, setContextMenu] = useState({ isOpen: false, x: 0, y: 0 });
+  const contextMenuRef = useRef(null);
   const baseURL = baseUrl();
 
-  const fetchURL = `${baseURL}/directory/${dirId ?? ""}`;
-
-  async function fetchData() {
-    try {
-      const res = await fetch(fetchURL, {
-        credentials: "include",
-      });
-      if (res.status == 403) {
-        console.log(await res.json());
-        navigate("/login");
-        return;
-      }
-      const data = await res.json();
-
-      if (data.error == "Invalid Id") {
-        setInvalidDirectory(true);
-        setDirectoriesList([]);
-        setFileList([]);
-        setCurrentDir("");
-        return;
-      }
-
-      if (data.error) {
-        navigate("/login");
-        return;
-      }
-      setInvalidDirectory(false);
-      setDirectoriesList(data.directories);
-      setFileList(data.files);
-      setCurrentDir(data.dirName);
-    } catch (error) {
-      console.error("Failed to fetch directory data:", error);
-    }
-  }
-
-  async function fetchProfile() {
-    try {
-      const { data } = await getProfileApi();
-
-      if (data.error) {
-        navigate("/login");
-        return;
-      }
-
-      setProfile({
-        name: data.name ?? "",
-        email: data.email ?? "",
-        role: data.role ?? "",
-        picture: data.picture ?? "",
-      });
-    } catch (error) {
-      console.log(error);
-      console.error("Failed to fetch profile:", error);
-    }
-  }
-
   useEffect(() => {
-    fetchData();
-    fetchProfile();
-  }, [fetchURL]);
-
-  async function handleLogout() {
-    if (isLoggingOut) {
-      return;
-    }
-
-    setIsLoggingOut(true);
-    try {
-      await fetch(`${baseURL}/user/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Failed to logout:", error);
-    } finally {
-      navigate("/login");
-      setIsLoggingOut(false);
-    }
-  }
-
-  async function handleLogoutAll() {
-    if (isLoggingOut) {
-      return;
-    }
-
-    setIsLoggingOut(true);
-    try {
-      await fetch(`${baseURL}/user/logoutAll`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Failed to logout:", error);
-    } finally {
-      navigate("/login");
-      setIsLoggingOut(false);
-    }
-  }
-
-  async function uploadHandle(e) {
-    const files = Array.from(e.target.files);
-
-    for (let file of files) {
-      const xhr = new XMLHttpRequest();
-      xhr.withCredentials = true;
-      const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-      setUploadQueue((prev) => [
-        ...prev,
-        { id: uploadId, name: file.name, percent: 0, status: "uploading" },
-      ]);
-
-      let formData = new FormData();
-      formData.append("file", file);
-      xhr.open("POST", `${baseURL}/file/${file.name}`, true);
-      xhr.responseType = "json";
-      if (dirId) {
-        xhr.setRequestHeader("dirid", dirId);
-      }
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          let percent = (event.loaded / event.total) * 100;
-
-          setUploadQueue((prev) =>
-            prev.map((item) =>
-              item.id === uploadId
-                ? { ...item, percent, status: "uploading" }
-                : item,
-            ),
-          );
-        }
-      };
-
-      xhr.onload = () => {
-        console.log("Uploaded:", file.name, xhr.response);
-        fetchData();
-
-        setUploadQueue((prev) =>
-          prev.map((item) =>
-            item.id === uploadId
-              ? { ...item, percent: 100, status: "done" }
-              : item,
-          ),
-        );
-
-        setTimeout(() => {
-          setUploadQueue((prev) => prev.filter((item) => item.id !== uploadId));
-        }, 1400);
-      };
-
-      xhr.onerror = () => {
-        console.error("Upload failed:", file.name);
-        setUploadQueue((prev) =>
-          prev.map((item) =>
-            item.id === uploadId ? { ...item, status: "error" } : item,
-          ),
-        );
-      };
-
-      xhr.send(formData);
-    }
-
-    e.target.value = "";
-  }
-
-  // async function uploadHandle(e) {
-  //   const files = Array.from(e.target.files);
-
-  //   const uploadPromises = files.map((file) => {
-  //     const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-  //     setUploadQueue((prev) => [
-  //       ...prev,
-  //       { id: uploadId, name: file.name, percent: 0, status: "uploading" },
-  //     ]);
-
-  //     const formData = new FormData();
-  //     formData.append("file", file);
-
-  //     return axios
-  //       .post(`${baseURL}/file/${file.name}`, formData, {
-  //         withCredentials: true,
-  //         headers: dirId ? { dirid: dirId } : {},
-  //         onUploadProgress: (event) => {
-  //           if (event.lengthComputable) {
-  //             const percent = Math.round((event.loaded * 100) / event.total);
-  //             setUploadQueue((prev) =>
-  //               prev.map((item) =>
-  //                 item.id === uploadId ? { ...item, percent } : item,
-  //               ),
-  //             );
-  //           }
-  //         },
-  //       })
-  //       .then((response) => {
-  //         console.log("Uploaded:", file.name, response.data);
-  //         setUploadQueue((prev) =>
-  //           prev.map((item) =>
-  //             item.id === uploadId
-  //               ? { ...item, percent: 100, status: "done" }
-  //               : item,
-  //           ),
-  //         );
-  //         setTimeout(() => {
-  //           setUploadQueue((prev) =>
-  //             prev.filter((item) => item.id !== uploadId),
-  //           );
-  //         }, 1400);
-  //       })
-  //       .catch((err) => {
-  //         console.error("Upload failed:", file.name);
-  //         setUploadQueue((prev) =>
-  //           prev.map((item) =>
-  //             item.id === uploadId ? { ...item, status: "error" } : item,
-  //           ),
-  //         );
-  //       });
-  //   });
-
-  //   await Promise.all(uploadPromises);
-  //   fetchData();
-  //   e.target.value = "";
-  // }
+    fetchData(dirId);
+  }, [dirId]);
 
   async function deleteHandel(id, fileordir) {
-    let response = await fetch(`${baseURL}/${fileordir}/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    let data = await response.text();
-    console.log(data);
-    fetchData();
+    await deleteFileApi(fileordir, id);
+    fetchData(dirId);
   }
 
   function handleRename(id, fileName, fileordir) {
@@ -300,22 +75,14 @@ const Directory = () => {
     if (!renameValue.trim()) {
       return;
     }
-    console.log(`${baseURL}/${renameTarget}/${renameId}`);
-    let response = await fetch(`${baseURL}/${renameTarget}/${renameId}`, {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ fileName: `${renameValue}` }),
-      credentials: "include",
-    });
+    let response = await renameApi(renameTarget, renameId, renameValue);
     setRenameValue("");
     setRenameTarget("");
     setRenameId("");
     setIsRenameOpen(false);
-    let data = await response.text();
+    let data = response.data;
     console.log(data);
-    fetchData();
+    fetchData(dirId);
   }
 
   async function createDir() {
@@ -328,290 +95,201 @@ const Directory = () => {
     });
     let data = await response.text();
     console.log(data);
-    fetchData();
+    fetchData(dirId);
   }
 
-  function findLogo(exection) {
-    const normalized =
-      typeof exection === "string" ? exection.toLowerCase() : "";
-    let logoObj = logoArr.find((logoObj) => logoObj.exe == normalized);
-    return logoObj?.logo ?? <FaFileAlt size={24} />;
-  }
+  const handleContextMenu = (e) => {
+    // Check if the right-click target is a file/folder card
+    const isCardElement = e.target.closest(".group[onContextMenu]");
 
-  if (invalidDirectory) {
-    return (
-      <div className="dir-page">
-        <section className="dir-section">
-          <div className="dir-section-title">Directory Error</div>
-          <div className="dir-empty">
-            The directory you are trying to access is not available or not
-            valid.
-          </div>
-        </section>
-      </div>
-    );
-  }
+    // Only open page context menu if NOT clicking on a card
+    if (!isCardElement) {
+      e.preventDefault();
+      setContextMenu({
+        isOpen: true,
+        x: e.clientX,
+        y: e.clientY,
+      });
+    }
+  };
 
   return (
-    <div className="dar">
-      <header className="dark:bg-amber-700">
-        <div className="dir-brand">
-          <div className="dir-logo">SD</div>
-          <div>
-            <div className="dir-title headtxt">Bhakti⭐</div>
-            <div className="dir-subtitle">Collection</div>
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      <Breadcrumbs crumb={crumb} />
+
+      {isDragging && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg pointer-events-none">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📁</div>
+            <p className="text-lg font-semibold text-blue-600">
+              Drop files here to upload
+            </p>
+            <p className="text-sm text-blue-500 mt-1">
+              Files will be automatically added to your directory
+            </p>
           </div>
         </div>
+      )}
 
-        <div className="dir-actions">
-          <div className="dir-user-chip">
-            <FaUserCircle size={28} className="dir-user-icon" />
-            <div className="dir-user-meta">
-              <div className="dir-user-name">{profile.name || "User"}</div>
-              <div className="dir-user-email">
-                {profile.email || "No email"}
-              </div>
+      <main className="flex-1" onContextMenu={handleContextMenu}>
+        <div className="mx-auto max-w-7xl">
+          {directoriesList.length === 0 && fileList.length === 0 && (
+            <div
+              // {...getRootProps({ style })}
+              className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-100 py-12 text-center m-4"
+            >
+              {/* <input {...getInputProps()} /> */}
+              <p className="text-gray-500">
+                No files or folders yet. Get started by uploading a file or
+                creating a folder.
+              </p>
             </div>
-          </div>
-          <label className="dir-upload">
-            <FaUpload />
-            <span>Upload</span>
-            <input
-              className="dir-upload-input"
-              multiple
-              type="file"
-              onChange={uploadHandle}
-            />
-          </label>
-          <button className="dir-button ghost" onClick={createDir}>
-            <FaFolderPlus />
-            <span>New Folder</span>
-          </button>
+          )}
 
-          <button
-            className="dir-button danger"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
+          {/* Folders and Files List */}
+          {(directoriesList.length > 0 || fileList.length > 0) && (
+            <div className="mt-4">
+              {/* View Toggle Buttons */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition ${
+                    viewMode === "list"
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <List size={18} />
+                  <span className="text-sm font-medium">List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition ${
+                    viewMode === "grid"
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <Grid3x3 size={18} />
+                  <span className="text-sm font-medium">Grid</span>
+                </button>
+              </div>
+
+              {/* List View */}
+              {viewMode === "list" && (
+                <div className="border border-gray-200 rounded-lg overflow-visible">
+                  {/* Folders */}
+                  {directoriesList.map(({ dirName, _id }) => (
+                    <FolderRow
+                      key={_id}
+                      dirName={dirName}
+                      dirId={_id}
+                      onRename={handleRename}
+                      onDelete={deleteHandel}
+                    />
+                  ))}
+
+                  {/* Files */}
+                  {fileList.map(({ fileName, _id, extension }) => (
+                    <FileRow
+                      key={_id}
+                      fileName={fileName}
+                      fileId={_id}
+                      extension={extension}
+                      baseURL={baseURL}
+                      onRename={handleRename}
+                      onDelete={deleteHandel}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Grid View */}
+              {viewMode === "grid" && (
+                <div className="space-y-8 files-grid">
+                  {/* Folders Grid */}
+                  {directoriesList.length > 0 && (
+                    <section>
+                      <h2 className="mb-4 text-lg font-bold text-gray-900">
+                        Folders
+                      </h2>
+                      <div className="grid auto-rows-max grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 files-grid">
+                        {directoriesList.map(({ dirName, _id }) => (
+                          <FolderCard
+                            key={_id}
+                            dirName={dirName}
+                            dirId={_id}
+                            onRename={handleRename}
+                            onDelete={deleteHandel}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Files Grid */}
+                  {fileList.length > 0 && (
+                    <section>
+                      <h2 className="mb-4 text-lg font-bold text-gray-900">
+                        Files
+                      </h2>
+                      <div className="grid auto-rows-max grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 files-grid">
+                        {fileList.map(({ fileName, _id, extension }) => (
+                          <FileCard
+                            key={_id}
+                            fileName={fileName}
+                            fileId={_id}
+                            extension={extension}
+                            baseURL={baseURL}
+                            onRename={handleRename}
+                            onDelete={deleteHandel}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Context Menu for Empty Space */}
+        {contextMenu.isOpen && (
+          <div
+            ref={contextMenuRef}
+            className="fixed w-56 rounded-lg border border-gray-300 bg-white shadow-xl z-50"
+            style={{
+              left: `${contextMenu.x}px`,
+              top: `${contextMenu.y}px`,
+            }}
           >
-            <IoLogOut size={20} />
-            <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
-          </button>
-          <button
-            className="dir-button danger"
-            onClick={handleLogoutAll}
-            disabled={isLoggingOut}
-          >
-            <IoLogOut size={20} />
-            <span>
-              {isLoggingOut ? "Logging out from All..." : "Logout All"}
-            </span>
-          </button>
-        </div>
-      </header>
-
-      <div className="dir-crumbs">
-        <Link className="dir-link" to="/">
-          Home
-        </Link>
-        <span className="dir-crumb-sep">-</span>
-        <span className="dir-crumb-current">
-          {currentDir ? `${currentDir}` : ""}
-        </span>
-      </div>
-
-      <section className="dir-section">
-        <div className="dir-section-title">Folders</div>
-        <div className="dir-grid">
-          {directoriesList.map(({ dirName, _id }) => (
-            <div className="dir-card" key={_id}>
-              <div className="dir-card-main">
-                <div className="dir-icon dir-icon-folder">
-                  <FaFolder />
-                </div>
-                <div>
-                  <div className="dir-card-title">{dirName}</div>
-                  <div className="dir-card-meta">Folder</div>
-                </div>
-              </div>
-              <div className="dir-card-actions">
-                <Link className="dir-button primary" to={`/directory/${_id}`}>
-                  <FaFolder />
-                  <span>Open</span>
-                </Link>
-                <button
-                  className="dir-button ghost"
-                  onClick={() => {
-                    handleRename(_id, dirName, "directory");
-                  }}
-                >
-                  <FaPen />
-                  <span>Rename</span>
-                </button>
-                <button
-                  className="dir-button danger"
-                  onClick={() => {
-                    deleteHandel(_id, "directory");
-                  }}
-                >
-                  <FaTrash />
-                  <span>Delete</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {directoriesList.length === 0 ? (
-          <div className="dir-empty">No folders yet.</div>
-        ) : null}
-      </section>
-
-      <section className="dir-section">
-        <div className="dir-section-title">Files</div>
-        <div className="dir-grid">
-          {fileList.map(({ fileName, _id, extension }) => (
-            <div className="dir-card" key={_id}>
-              <div className="dir-card-main">
-                <div className="dir-icon dir-icon-file">
-                  {findLogo(extension)}
-                </div>
-                <div>
-                  <div className="dir-card-title">{fileName}</div>
-                  <div className="dir-card-meta">File</div>
-                </div>
-              </div>
-              <div className="dir-card-actions">
-                <a
-                  className="dir-button ghost"
-                  href={`${baseURL}/file/${_id}?action=preview`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaEye />
-                  <span>Preview</span>
-                </a>
-                <a
-                  className="dir-button ghost"
-                  href={`${baseURL}/file/${_id}?action=download`}
-                >
-                  <FaDownload />
-                  <span>Download</span>
-                </a>
-
-                <button
-                  className="dir-button ghost"
-                  onClick={() => {
-                    handleRename(_id, fileName, "file");
-                  }}
-                >
-                  <FaPen />
-                  <span>Rename</span>
-                </button>
-                <button
-                  className="dir-button danger"
-                  onClick={() => {
-                    deleteHandel(_id, "file");
-                  }}
-                >
-                  <FaTrash />
-                  <span>Delete</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {fileList.length === 0 ? (
-          <div className="dir-empty">No files yet.</div>
-        ) : null}
-      </section>
-
-      {uploadQueue.length > 0 ? (
-        <section className="dir-section">
-          <div className="dir-section-title">Uploads</div>
-          <div className="dir-upload-list">
-            {uploadQueue.map((item) => (
-              <div className="dir-upload-item" key={item.id}>
-                <div className="dir-upload-row">
-                  <span className="dir-upload-name">{item.name}</span>
-                  <span className="dir-upload-meta">
-                    {item.status === "done"
-                      ? "Done"
-                      : `${item.percent.toFixed(0)}%`}
-                  </span>
-                </div>
-                <div className="dir-progress">
-                  <div
-                    className="dir-progress-bar"
-                    style={{ width: `${item.percent}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+            <button
+              onClick={() => {
+                createDir();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 last:rounded-b-lg text-left"
+            >
+              <span className="text-lg">📁</span>
+              <span>Create Folder</span>
+            </button>
           </div>
-        </section>
-      ) : null}
+        )}
+      </main>
 
-      {isRenameOpen ? (
-        <div className="dir-modal-backdrop">
-          <div className="dir-modal">
-            <div className="dir-modal-title">
-              Rename {renameTarget === "file" ? "file" : "folder"}
-            </div>
-            <div className="dir-modal-subtitle">
-              Use a clear, descriptive name.
-            </div>
-            <input
-              className="dir-modal-input"
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-            />
-            <div className="dir-modal-actions">
-              <button
-                className="dir-button ghost"
-                onClick={() => {
-                  setIsRenameOpen(false);
-                  setRenameValue("");
-                  setRenameTarget("");
-                  setRenameId("");
-                }}
-              >
-                <FaTimes />
-                <span>Cancel</span>
-              </button>
-              <button className="dir-button primary" onClick={handleSave}>
-                <FaSave />
-                <span>Save</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {isCommingSoonOpen ? (
-        <div className="dir-modal-backdrop">
-          <div className="dir-modal coming-modal">
-            <div className="dir-modal-title">🫸 Cuteness Locked</div>
-
-            <div className="dir-modal-subtitle">
-              Open only after <b>July 2026</b> 😎
-              <br />
-              Agar tab tak aaye toh hi access milega 😏
-            </div>
-
-            <div className="dir-modal-actions">
-              <button
-                className="dir-button ghost"
-                onClick={() => setIsCommingSoonOpen(false)}
-              >
-                <FaTimes />
-                <span>Close</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <RenameModal
+        isOpen={isRenameOpen}
+        renameTarget={renameTarget}
+        renameValue={renameValue}
+        onRenameChange={setRenameValue}
+        onCancel={() => {
+          setIsRenameOpen(false);
+          setRenameValue("");
+          setRenameTarget("");
+          setRenameId("");
+        }}
+        onSave={handleSave}
+      />
     </div>
   );
 };
