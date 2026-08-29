@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 export const FolderRow = ({ _id, dirName, dirId, onRename, onDelete }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -28,9 +29,15 @@ export const FolderRow = ({ _id, dirName, dirId, onRename, onDelete }) => {
     onDelete(dirId, "directory");
     setIsMenuOpen(false);
   };
-
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuPos({ x: e.clientX, y: e.clientY })
+    setIsMenuOpen(true);
+  };
   return (
     <div
+      onContextMenu={handleContextMenu}
       key={_id}
       className="flex items-center justify-between border-b border-gray-200 px-4 py-3 bg-white hover:bg-gray-50 transition"
     >
@@ -48,14 +55,23 @@ export const FolderRow = ({ _id, dirName, dirId, onRename, onDelete }) => {
       {/* 3-dot menu */}
       <div className="relative ml-4 " ref={menuRef}>
         <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={(e) => {
+            setIsMenuOpen(!isMenuOpen);
+            setMenuPos({ x: e.clientX - 150, y: e.clientY + 20 });
+          }}
           className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 transition"
         >
           <MoreVertical size={18} />
         </button>
 
         {isMenuOpen && (
-          <div className="absolute top-0 right-0 mt-2 w-40 rounded-lg border border-gray-200 bg-white shadow-lg z-50">
+          <div
+            style={{
+              left: `${menuPos.x}px`,
+              top: `${menuPos.y}px`,
+            }}
+            className="fixed w-40 rounded-lg border border-gray-200 bg-white shadow-lg z-50"
+          >
             <Link
               to={`/directory/${dirId}`}
               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"

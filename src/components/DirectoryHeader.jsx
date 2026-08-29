@@ -4,7 +4,6 @@ import { IoLogOut, IoLogOutSharp } from "react-icons/io5";
 import { ChevronDown } from "lucide-react";
 import { useHeaderContext } from "../context/HeaderContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { baseUrl } from "../baseUrl";
 import FilePondComponent from "./UploadingLogic/FilePond";
 
 export const DirectoryHeader = ({ onUpload }) => {
@@ -16,6 +15,7 @@ export const DirectoryHeader = ({ onUpload }) => {
 
   const {
     profile,
+    setFiles,
     isLoggingOut,
     setIsLoggingOut,
     fetchProfile,
@@ -77,9 +77,12 @@ export const DirectoryHeader = ({ onUpload }) => {
               <input
                 type="file"
                 multiple
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log("you clciking on downlaod");
+                onChange={(e) => {
+                  console.log(e.target.files);
+                  setFiles((prevFiles) => [
+                    ...prevFiles,
+                    ...Array.from(e.target.files),
+                  ]);
                 }}
                 className="hidden"
               />

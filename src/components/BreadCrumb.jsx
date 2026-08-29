@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useDirectoryContext } from "../context/DirectoryContext";
-// import Link from "next/link";
 
 export const Breadcrumbs = ({ crumb }) => {
   let sref = useRef();
@@ -13,6 +11,7 @@ export const Breadcrumbs = ({ crumb }) => {
     });
     return () => {};
   }, [crumb]);
+
   return (
     <div className=" border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
       <div

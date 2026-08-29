@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
-import { baseUrl } from "../baseUrl";
 import { Link, useNavigate } from "react-router-dom";
 import { sendingAuthCode, sendingLoginData } from "../apis/POST_login_apis";
 import {
@@ -73,8 +72,8 @@ export default function Login() {
   });
 
   function handleGitHubSignIn() {
-    const clientId = "Ov23libALxbcDvmBJaII";
-    const redirectUri = "http://localhost:5500/gitcallback";
+    const clientId = import.meta.env.VITE_CLIENT_ID_GIT;
+    const redirectUri = import.meta.env.VITE_REDIRECTURL_GIT;
     const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user`;
     window.open(githubUrl, "popup", "width=500 height=700 left=500 top=100");
   }
@@ -255,7 +254,8 @@ export default function Login() {
                 href="#"
                 className=" text-center text-sm text-gray-500 transition-colors hover:text-gray-700"
                 onClick={() => {
-                  console.log("clicked on forget pass");
+                navigate('/forgetPassword')
+
                 }}
               >
                 Forgot password?

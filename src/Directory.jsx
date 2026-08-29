@@ -19,7 +19,6 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
-import { baseUrl } from "./baseUrl";
 import { Breadcrumbs } from "./components/BreadCrumb";
 import { getDirectoryDataApi } from "./apis/getDirectoryData";
 import { FolderRow } from "./components/FolderRow";
@@ -31,6 +30,7 @@ import { useDirectoryContext } from "./context/DirectoryContext";
 import { Grid3x3, List } from "lucide-react";
 import { FolderCard } from "./components/FolderCard";
 import { FileCard } from "./components/FileCard";
+import { createDirectoryApi } from "./apis/POST_createDir_api";
 
 let logoArr = [
   { exe: ".mp4", logo: <BsFiletypeMp4 size={30} /> },
@@ -53,7 +53,7 @@ const Directory = () => {
   const [viewMode, setViewMode] = useState("list");
   const [contextMenu, setContextMenu] = useState({ isOpen: false, x: 0, y: 0 });
   const contextMenuRef = useRef(null);
-  const baseURL = baseUrl();
+  const baseURL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
     fetchData(dirId);
@@ -86,22 +86,24 @@ const Directory = () => {
   }
 
   async function createDir() {
-    let response = await fetch(`${baseURL}/directory/`, {
-      method: "POST",
-      headers: {
-        parentdirid: dirId,
-      },
-      credentials: "include",
-    });
-    let data = await response.text();
-    console.log(data);
-    fetchData(dirId);
+    try {
+      console.log(dirId);
+      let response = await createDirectoryApi(dirId || "");
+      setContextMenu({
+        isOpen: false,
+        x: 0,
+        y: 0,
+      });
+      let data = response.data;
+      fetchData(dirId);
+    } catch (error) {
+      console.dir(error);
+    }
   }
 
   const handleContextMenu = (e) => {
     // Check if the right-click target is a file/folder card
     const isCardElement = e.target.closest(".group[onContextMenu]");
-
     // Only open page context menu if NOT clicking on a card
     if (!isCardElement) {
       e.preventDefault();
@@ -112,6 +114,25 @@ const Directory = () => {
       });
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      console.log("hello");
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target)
+      ) {
+        setContextMenu({ isOpen: false, x: 0, y: 0 });
+      }
+    };
+
+    if (contextMenu.isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [contextMenu.isOpen]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -131,7 +152,7 @@ const Directory = () => {
         </div>
       )}
 
-      <main className="flex-1" onContextMenu={handleContextMenu}>
+      <main className="flex-1 group" onContextMenu={handleContextMenu}>
         <div className="mx-auto max-w-7xl">
           {directoriesList.length === 0 && fileList.length === 0 && (
             <div
@@ -272,6 +293,16 @@ const Directory = () => {
             >
               <span className="text-lg">📁</span>
               <span>Create Folder</span>
+            </button>
+            <button
+              onClick={() => {
+                document.querySelector("input[type='file']").click();
+                setContextMenu({ isOpen: false, x: 0, y: 0 });
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-lg text-left"
+            >
+              <span className="text-lg">📤</span>
+              <span>File Upload</span>
             </button>
           </div>
         )}

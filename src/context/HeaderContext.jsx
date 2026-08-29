@@ -1,14 +1,15 @@
 import { createContext, useContext, useState } from "react";
-import { createDirectory } from "../apis/createDirectory";
-import { getProfileApi } from "../apis/getProfileApi";
+import { getProfileApi } from "../apis/GET_PROFILE_apis";
 import { useNavigate } from "react-router-dom";
 import { logoutAllApi, logoutApi } from "../apis/POST_logout_apis";
-
+import { createDirectoryApi } from "../apis/POST_createDir_api";
+//
 let HeaderContext = createContext();
 
 export const HeaderContextProvider = ({ children }) => {
   let nevigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [files, setFiles] = useState([]);
 
   const [profile, setProfile] = useState({
     name: "abc",
@@ -63,13 +64,15 @@ export const HeaderContextProvider = ({ children }) => {
   }
 
   async function onCreateFolder(dirId) {
-    let response = await createDirectory(dirId);
+    let response = await createDirectoryApi(dirId);
     let data = response.data;
   }
 
   return (
     <HeaderContext.Provider
       value={{
+        setFiles,
+        files,
         profile,
         setProfile,
         fetchProfile,

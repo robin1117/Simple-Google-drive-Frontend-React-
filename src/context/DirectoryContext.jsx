@@ -18,12 +18,12 @@ export const DirectoryContextProvider = ({ children }) => {
       console.log(error.message);
       if (error.status == 403) {
         navigate("/login");
-        return { crumb, directoriesList, fileList };
+        // return { crumb, directoriesList, fileList };
       }
       if (error.message == "Invalid Id") {
         setDirectoriesList([]);
         setFileList([]);
-        return { crumb, directoriesList, fileList };
+        // return { crumb, directoriesList, fileList };
       }
     }
   }

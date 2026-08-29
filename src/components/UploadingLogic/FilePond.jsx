@@ -5,12 +5,12 @@ import "./FilePond.css";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useDirectoryContext } from "../../context/DirectoryContext";
+import { useHeaderContext } from "../../context/HeaderContext";
 
 const FilePondComponent = () => {
   const { fetchData, isDragging, setIsDragging } = useDirectoryContext();
-
-  const [isUploading, setisUploading] = useState(false);
-
+  const { files, setFiles } = useHeaderContext();
+  const [isUploading, setisUploading] = useState(true);
   const pondRef = useRef(null);
   let { dirId } = useParams();
 
@@ -18,6 +18,12 @@ const FilePondComponent = () => {
     if (!err) {
       setTimeout(() => {
         pondRef.current.removeFile(file.id);
+
+        setFiles((prevFiles) =>
+          prevFiles.filter(
+            (f) => !(f.name === file.filename && f.size === file.fileSize),
+          ),
+        );
         fetchData(dirId);
       }, 1000);
     }
@@ -25,7 +31,7 @@ const FilePondComponent = () => {
 
   function onFileRemoveFromUi(err, file) {
     let fileList = pondRef.current?.getFiles();
-    fileList.length == 0 ? setisUploading(false) : "";
+    fileList.length == 0 ? setisUploading(true) : "";
   }
 
   useEffect(() => {
@@ -60,6 +66,7 @@ const FilePondComponent = () => {
     <div className={`filepond-container ${!isUploading ? "hidden" : ""}`}>
       <FilePond
         ref={pondRef}
+        files={files}
         onprocessfile={handleProcessFile}
         onremovefile={onFileRemoveFromUi}
         dropOnPage={true}

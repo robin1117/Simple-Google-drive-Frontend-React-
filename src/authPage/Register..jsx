@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { baseUrl } from "../baseUrl";
 import { Link, useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { sendingAuthCode } from "../apis/POST_login_apis";

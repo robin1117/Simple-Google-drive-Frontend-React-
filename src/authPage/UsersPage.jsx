@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import "./UsersPage.css";
-import { baseUrl } from "../baseUrl";
 import { useNavigate } from "react-router-dom";
 import { useHeaderContext } from "../context/HeaderContext";
-import { getProfileApi } from "../apis/getProfileApi";
+import { getProfileApi, getUsersApi } from "../apis/GET_PROFILE_apis";
 import { deleteUserWithUserId } from "../apis/deleteUserWithuserId";
 import Modal from "react-modal";
 import { logoutWithUserIdApi } from "../apis/POST_logout_apis";
@@ -29,7 +28,6 @@ export default function UsersPage() {
     }
   };
 
-  console.log(users);
   useEffect(() => {
     fetchUsers();
     fetchProfile();
@@ -38,7 +36,6 @@ export default function UsersPage() {
   async function fetchProfile() {
     try {
       const { data } = await getProfileApi();
-
       if (data.error) {
         navigate("/login");
         return;
@@ -51,30 +48,25 @@ export default function UsersPage() {
         picture: data.picture ?? "",
       });
     } catch (error) {
-      console.log(error);
-      console.error("Failed to fetch profile:", error);
+      console.dir(error);
     }
   }
 
   async function fetchUsers() {
     try {
-      const response = await fetch(`${baseUrl()}/users`, {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const response = await getUsersApi();
+      if (response.status) {
+        const data = response.data;
         setUsers(data);
-      } else if (response.status == 403) {
-        nevigate("/");
-      } else if (response.status == 401) {
-        nevigate("/login");
-      } else {
-        // Handle other error statuses if needed
-        console.error("Error fetching users data", response.status);
       }
     } catch (err) {
-      console.error("Error fetching user info:", err);
+      if (err.status == 403) {
+        nevigate("/");
+      } else if (err.status == 401) {
+        nevigate("/login");
+      } else {
+        console.error("Error fetching users data", err.status);
+      }
     }
   }
 
