@@ -14,8 +14,8 @@ import {
 } from "react-spinners";
 
 export default function Login() {
-  const [username, setUsername] = useState("devinstech1117@gmail.com");
-  const [password, setPassword] = useState("1234");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLogined, isLoginedSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
