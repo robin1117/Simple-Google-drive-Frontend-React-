@@ -77,7 +77,7 @@ export default function UsersPage() {
     if (!confirming) return;
     try {
       let data = await deleteUserWithUserId(user.id, deleteType);
-      if (data.statusText == "OK") {
+      if (data.status == "200") {
         data.data.message;
         alert(data.data.message);
         setisPopUpOpen(false);
