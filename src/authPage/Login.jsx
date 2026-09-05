@@ -39,7 +39,8 @@ export default function Login() {
           from,
           origin: e.origin,
         });
-        if (data.statusText == "OK") {
+        console.log(data);
+        if (data.isLogin) {
           navigate("/");
         }
       } catch (error) {
@@ -58,7 +59,8 @@ export default function Login() {
           from: "Google_auth",
           origin,
         });
-        if (data.statusText == "OK") {
+        console.log(data);
+        if (data.isLogin) {
           navigate("/");
         }
       } catch (error) {
@@ -254,8 +256,7 @@ export default function Login() {
                 href="#"
                 className=" text-center text-sm text-gray-500 transition-colors hover:text-gray-700"
                 onClick={() => {
-                navigate('/forgetPassword')
-
+                  navigate("/forgetPassword");
                 }}
               >
                 Forgot password?
