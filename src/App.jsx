@@ -11,6 +11,7 @@ import GitCallBack from "./authPage/callbacks/gitCallBack";
 import { DirectoryContextProvider } from "./context/DirectoryContext";
 import ForgotPasswordPage from "./authPage/ForgotPasswordPage";
 import PasswordReset from "./authPage/passwordReset";
+import NotFound from "./components/NotFound";
 
 function App() {
   return (
@@ -23,12 +24,12 @@ function App() {
           <Route path="/forgetPassword" element={<ForgotPasswordPage />} />
           <Route path="/passwordReset" element={<PasswordReset />} />
           <Route path="/users" element={<UsersPage />} />
-          
+
           <Route path="/" element={<Layout />}>
             <Route index element={<Directory />} />
             <Route path="/directory/:dirId?" element={<Directory />} />
           </Route>
-
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </HeaderContextProvider>
     </DirectoryContextProvider>
