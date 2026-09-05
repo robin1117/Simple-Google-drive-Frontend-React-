@@ -40,7 +40,7 @@ export default function Login() {
           origin: e.origin,
         });
         console.log(data);
-        if (data.isLogin) {
+        if (data.status == "200") {
           navigate("/");
         }
       } catch (error) {
@@ -60,7 +60,7 @@ export default function Login() {
           origin,
         });
         console.log(data);
-        if (data.isLogin) {
+        if (data.status == "200") {
           navigate("/");
         }
       } catch (error) {
