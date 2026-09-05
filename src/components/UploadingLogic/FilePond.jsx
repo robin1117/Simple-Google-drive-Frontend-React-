@@ -10,7 +10,7 @@ import { useHeaderContext } from "../../context/HeaderContext";
 const FilePondComponent = () => {
   const { fetchData, isDragging, setIsDragging } = useDirectoryContext();
   const { files, setFiles } = useHeaderContext();
-  const [isUploading, setisUploading] = useState(true);
+  const [isUploading, setisUploading] = useState(false);
   const pondRef = useRef(null);
   let { dirId } = useParams();
 
@@ -31,7 +31,7 @@ const FilePondComponent = () => {
 
   function onFileRemoveFromUi(err, file) {
     let fileList = pondRef.current?.getFiles();
-    fileList.length == 0 ? setisUploading(true) : "";
+    fileList.length == 0 ? setisUploading(false) : "";
   }
 
   useEffect(() => {
@@ -67,11 +67,18 @@ const FilePondComponent = () => {
       <FilePond
         ref={pondRef}
         files={files}
+        onaddfilestart={(a) => {
+          setisUploading(true);
+        }}
         onprocessfile={handleProcessFile}
         onremovefile={onFileRemoveFromUi}
         dropOnPage={true}
+        onupdatefiles={(s) => {}}
         allowMultiple={true}
         dropOnElement={false}
+        labelIdle=""
+        allowDrop={false}
+        allowBrowse={false}
         server={{
           url: import.meta.env.VITE_BASE_URL,
           withCredentials: true,
