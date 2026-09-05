@@ -21,9 +21,9 @@ const Register = () => {
   const [VerifyDisable, setVerifyDisable] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "nancy",
-    email: "robinsingh@gmail.com",
-    password: "abcd",
+    name: "",
+    email: "",
+    password: "",
     otp: "",
   });
   let navigate = useNavigate();
