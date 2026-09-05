@@ -73,7 +73,7 @@ const FilePondComponent = () => {
         allowMultiple={true}
         dropOnElement={false}
         server={{
-          url: "http://localhost:5000",
+          url: import.meta.env.VITE_BASE_URL,
           withCredentials: true,
           process: {
             url: "/file/upload/",
