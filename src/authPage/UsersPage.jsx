@@ -20,8 +20,8 @@ export default function UsersPage() {
     if (!confirming) return;
 
     let data = await logoutWithUserIdApi(user.id);
-
-    if (data.statusText == "OK") {
+    console.log(data);
+    if (data.status == "200") {
       data.data.message;
       alert(data.data.message);
       fetchUsers();
@@ -37,7 +37,7 @@ export default function UsersPage() {
     try {
       const { data } = await getProfileApi();
       if (data.error) {
-        navigate("/login");
+        nevigate("/login");
         return;
       }
 
